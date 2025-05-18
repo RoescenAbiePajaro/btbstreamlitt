@@ -1,12 +1,25 @@
-# VirtualPainter
-import streamlit as st
+#VirtualPainter.py
 import cv2
 import numpy as np
 import os
 import time
 import HandTrackingModule as htm
+from tkinter import *
+from PIL import Image, ImageTk
 from KeyboardInput import KeyboardInput
-from PIL import Image
+import tkinter as tk
+from tkinter import messagebox
+
+# Create a hidden tkinter window for the icon
+root = Tk()
+root.withdraw()  # Hide the main tkinter window
+
+# Set the taskbar icon
+try:
+    img = PhotoImage(file='C:\\Users\\s\\PycharmProjects\\btb\\icon\\icons.png')
+    root.iconphoto(False, img)
+except Exception as e:
+    print(f"Could not set icon: {e}")
 
 # Variables
 brushSize = 10
@@ -44,6 +57,14 @@ swipe_active = False  # To track if swipe is in progress
 # Default drawing color
 drawColor = (255, 0, 255)
 
+# Set up the camera
+cap = cv2.VideoCapture(0)
+cap.set(3, 1280)  # Width
+cap.set(4, 720)  # Height
+
+# Assigning Detector
+detector = htm.handDetector(detectionCon=0.85)
+
 # Previous points
 xp, yp = 0, 0
 
@@ -53,8 +74,6 @@ imgCanvas = np.zeros((720, 1280, 3), np.uint8)
 # Undo/Redo Stack - now stores both canvas and text state
 undoStack = []
 redoStack = []
-
-
 
 # Create keyboard input handler
 keyboard_input = KeyboardInput()
@@ -68,13 +87,56 @@ def save_state():
         'text_objects': keyboard_input.text_objects.copy()
     }
 
-
 # Function to restore state (both canvas and text)
 def restore_state(state):
     global imgCanvas
     imgCanvas = state['canvas'].copy()
     keyboard_input.text_objects = state['text_objects'].copy()
 
+# Function to show transient notification
+def show_transient_notification(message, duration=1000, is_error=False):
+    notification = Toplevel(root)
+    notification.wm_overrideredirect(True)
+
+    # Calculate position to be centered on screen (not just drawing area)
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # Notification will be 250px wide and auto-height
+    notif_width = 250
+    notification.wm_geometry(f"+{(screen_width - notif_width) // 2}+{(screen_height - 100) // 2}")
+
+    # Style based on message type
+    bg_color = 'lightyellow'
+    if is_error:
+        bg_color = '#ffdddd'  # light red for errors
+    elif "selected" in message.lower():
+        bg_color = '#ddffdd'  # light green for selections
+
+    # Create frame for better centering control
+    frame = Frame(notification, bg=bg_color, padx=10, pady=10)
+    frame.pack(expand=True, fill=BOTH)
+
+    # Create notification label with improved centering
+    label = Label(
+        frame,
+        text=message,
+        font=('Helvetica', 12, 'bold'),
+        bg=bg_color,
+        fg='#333333',
+        padx=10,
+        pady=10,
+        wraplength=notif_width - 40,  # Account for padding
+        justify=CENTER,
+        anchor=CENTER  # This ensures text is centered within the label
+    )
+    label.pack(expand=True, fill=BOTH)
+
+    # Add a subtle border
+    notification.config(bd=1, relief='solid')
+
+    # Auto-destroy after duration
+    notification.after(duration, notification.destroy)
 
 # Function to save the canvas
 def save_canvas():
@@ -109,8 +171,8 @@ def save_canvas():
         )
 
     cv2.imwrite(save_path, saved_img)
-    st.success(f"Canvas Saved at {save_path}")
-
+    print(f"Canvas Saved at {save_path}")
+    show_transient_notification(f"Saved to:\n{save_path}")
 
 # Function to interpolate points
 def interpolate_points(x1, y1, x2, y2, num_points=10):
@@ -121,28 +183,12 @@ def interpolate_points(x1, y1, x2, y2, num_points=10):
         points.append((x, y))
     return points
 
-
-# Streamlit app
-st.title("Beyond The Brush - Virtual Painter")
-
-# Camera input
-run = st.checkbox('Run', value=True)
-FRAME_WINDOW = st.image([])
-cap = cv2.VideoCapture(0)
-cap.set(3, 1280)  # Width
-cap.set(4, 720)  # Height
-
-# Assigning Detector
-detector = htm.handDetector(detectionCon=0.85)
-
-while run:
+# Main Loop
+while True:
     start_time = time.time()
 
     # 1. Import Image
     success, img = cap.read()
-    if not success:
-        continue
-
     img = cv2.flip(img, 1)
 
     # 2. Find Hand Landmarks
@@ -180,35 +226,35 @@ while run:
                 elif 128 < x1 < 256:  # Pink
                     header = overlayList[2]
                     drawColor = (255, 0, 255)  # Pink
-                    st.toast("Pink brush selected")
+                    show_transient_notification("Pink brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 256 < x1 < 384:  # Blue
                     header = overlayList[3]
                     drawColor = (255, 0, 0)  # Blue
-                    st.toast("Blue brush selected")
+                    show_transient_notification("Blue brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 384 < x1 < 512:  # Green
                     header = overlayList[4]
                     drawColor = (0, 255, 0)  # Green
-                    st.toast("Green brush selected")
+                    show_transient_notification("Green brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 512 < x1 < 640:  # Yellow
                     header = overlayList[5]
                     drawColor = (0, 255, 255)  # Yellow
-                    st.toast("Yellow brush selected")
+                    show_transient_notification("Yellow brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 640 < x1 < 768:  # Eraser
                     header = overlayList[6]
                     drawColor = (0, 0, 0)  # Eraser
-                    st.toast("Eraser selected")
+                    show_transient_notification("Eraser selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
                     # Delete selected text if any
@@ -221,9 +267,9 @@ while run:
                         redoStack.append(save_state())
                         state = undoStack.pop()
                         restore_state(state)
-                        st.toast("Undo")
+                        show_transient_notification("Undo")
                     else:
-                        st.toast("Nothing to undo")
+                        show_transient_notification("Nothing to undo")
                     show_guide = False
 
                 elif 896 < x1 < 1024:  # Redo
@@ -232,14 +278,14 @@ while run:
                         undoStack.append(save_state())
                         state = redoStack.pop()
                         restore_state(state)
-                        st.toast("Redo")
+                        show_transient_notification("Redo")
                     else:
-                        st.toast("Nothing to redo")
+                        show_transient_notification("Nothing to redo")
                     show_guide = False
 
                 elif 1024 < x1 < 1152:  # Guide
                     header = overlayList[9]
-                    st.toast("Guide selected")
+                    show_transient_notification("Guide selected")
                     # Toggle guide display
                     show_guide = True  # Always show guide when selected
                     current_guide_index = 0  # Reset to first guide
@@ -249,7 +295,7 @@ while run:
                 elif 1155 < x1 < 1280:
                     if not keyboard_input.active:
                         keyboard_input.active = True
-                        st.toast("Keyboard Mode Opened")
+                        show_transient_notification("Keyboard Mode Opened")
                     header = overlayList[10]
                     show_guide = False
 
@@ -265,13 +311,13 @@ while run:
                             eraserSize = min(200, eraserSize + 5)
                         else:  # Brush
                             brushSize = min(50, brushSize + 1)
-                    st.toast(
+                    show_transient_notification(
                         f"{'Eraser' if drawColor == (0, 0, 0) else 'Brush'} size: {eraserSize if drawColor == (0, 0, 0) else brushSize}")
 
             # Show selection rectangle
             cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), drawColor, cv2.FILLED)
 
-        # ==================== HAND GESTURE LOGIC ====================
+    # ==================== HAND GESTURE LOGIC ====================
         # GUIDE NAVIGATION MODE - One index finger, guide visible, keyboard not active
         if fingers[1] and not fingers[2] and show_guide and not keyboard_input.active:
             # Start or continue swipe gesture
@@ -289,7 +335,7 @@ while run:
                         current_guide_index = min(len(guideList) - 1, current_guide_index + 1)
 
                     current_guide = guideList[current_guide_index]
-                    st.toast(f"Guide {current_guide_index + 1}/{len(guideList)}")
+                    show_transient_notification(f"Guide {current_guide_index + 1}/{len(guideList)}")
                     swipe_active = False  # avoid rapid multiple swipes
 
             # Visual feedback
@@ -367,6 +413,13 @@ while run:
     last_time = current_time
     keyboard_input.update(dt)
 
+    # Check for keyboard input
+    key = cv2.waitKey(1) & 0xFF
+    if keyboard_input.process_key_input(key):
+        # When text is confirmed or changed, save state
+        undoStack.append(save_state())
+        redoStack.clear()
+
     # 8. Convert Canvas to Grayscale and Invert
     imgGray = cv2.cvtColor(imgCanvas, cv2.COLOR_BGR2GRAY)
     _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
@@ -409,13 +462,23 @@ while run:
         cv2.putText(img, f"Guide {current_guide_index + 1}/{len(guideList)}", (1100, 150),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-    # Display the image in Streamlit
-    FRAME_WINDOW.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    # 12. Display the image
+    cv2.namedWindow("Beyond The Brush", cv2.WINDOW_GUI_NORMAL)  # Create window with normal GUI (not resizable)
+    cv2.resizeWindow("Beyond The Brush", 1280, 720)  # Set window size to 1280x720
+    cv2.imshow("Beyond The Brush", img)
 
     # Maintain 60 FPS
     elapsed_time = time.time() - start_time
     if elapsed_time < time_per_frame:
         time.sleep(time_per_frame - elapsed_time)
 
-# Release resources when stopped
+    # Process Tkinter events
+    root.update()
+
+    # Exit condition
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
 cap.release()
+cv2.destroyAllWindows()
