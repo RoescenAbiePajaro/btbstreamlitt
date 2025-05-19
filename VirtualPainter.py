@@ -7,6 +7,7 @@ import time
 import HandTrackingModule as htm
 from KeyboardInput import KeyboardInput
 from PIL import Image
+import keyboard
 
 # Variables
 brushSize = 10
@@ -60,6 +61,20 @@ redoStack = []
 keyboard_input = KeyboardInput()
 last_time = time.time()
 
+
+def handle_keyboard_events():
+    if keyboard_input.active:
+        if keyboard.is_pressed('enter'):
+            keyboard_input.process_key_input(13)  # Enter key
+        elif keyboard.is_pressed('backspace'):
+            keyboard_input.process_key_input(8)  # Backspace
+        elif keyboard.is_pressed('esc'):
+            keyboard_input.active = False
+        else:
+            # Check for printable characters
+            for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !@#$%^&*()_+-=[]{}|;:",./<>?`~':
+                if keyboard.is_pressed(c):
+                    keyboard_input.process_key_input(ord(c))
 
 # Function to save current state (both canvas and text)
 def save_state():
@@ -362,6 +377,7 @@ while run:
             keyboard_input.end_drag()
 
     # Handle keyboard input
+    handle_keyboard_events()  # Add this line
     current_time = time.time()
     dt = current_time - last_time
     last_time = current_time

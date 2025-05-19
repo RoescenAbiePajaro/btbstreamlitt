@@ -1,5 +1,5 @@
 # KeyboardInput.py
-
+import time
 import cv2
 import numpy as np
 from collections import deque
@@ -163,7 +163,7 @@ class KeyboardInput:
                 cv2.rectangle(img, top_left, bottom_right, (0, 255, 0), 2)
 
         # Only draw current input text and cursor if keyboard is active
-        if self.active and (self.text or self.cursor_visible):
+        if self.active:
             # Draw outline
             cv2.putText(
                 img,
@@ -202,7 +202,7 @@ class KeyboardInput:
                     img,
                     cursor_pos,
                     (cursor_pos[0], cursor_pos[1] - 30),
-                    self.default_color,
+                    (255, 255, 255),  # White cursor
                     2
                 )
 
