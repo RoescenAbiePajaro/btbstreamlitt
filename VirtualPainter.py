@@ -8,6 +8,17 @@ import HandTrackingModule as htm
 from KeyboardInput import KeyboardInput
 from PIL import Image
 import keyboard
+from collections import deque
+
+
+# Set page config first
+st.set_page_config(
+    page_title="Welcome to Beyond The Brush",
+    page_icon="static/icons.png",  # e.g., "assets/icon.png"
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
 
 # Variables
 brushSize = 10
@@ -55,12 +66,9 @@ imgCanvas = np.zeros((720, 1280, 3), np.uint8)
 undoStack = []
 redoStack = []
 
-
-
 # Create keyboard input handler
 keyboard_input = KeyboardInput()
 last_time = time.time()
-
 
 def handle_keyboard_events():
     if keyboard_input.active:
@@ -70,17 +78,72 @@ def handle_keyboard_events():
             keyboard_input.process_key_input(8)  # Backspace
         elif keyboard.is_pressed('esc'):
             keyboard_input.active = False
+        elif keyboard.is_pressed('caps lock'):
+            # Toggle caps lock state
+            keyboard_input.caps_lock = not getattr(keyboard_input, 'caps_lock', False)
         else:
-            # Check for printable characters
-            for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !@#$%^&*()_+-=[]{}|;:",./<>?`~':
-                if keyboard.is_pressed(c):
-                    keyboard_input.process_key_input(ord(c))
+            shift_pressed = keyboard.is_pressed('shift')
+            caps_lock_active = getattr(keyboard_input, 'caps_lock', False)
+
+            # First check numbers (they shouldn't be affected by caps lock)
+            for num in '0123456789':
+                if keyboard.is_pressed(num):
+                    if shift_pressed:
+                        # Shift + number gives the special character
+                        shift_num_map = {
+                            '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+                            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'
+                        }
+                        char = shift_num_map[num]
+                        keyboard_input.process_key_input(ord(char))
+                    else:
+                        # Regular number
+                        keyboard_input.process_key_input(ord(num))
+                    return
+
+            # Then check letters (affected by both shift and caps lock)
+            for letter in 'abcdefghijklmnopqrstuvwxyz':
+                if keyboard.is_pressed(letter):
+                    if shift_pressed ^ caps_lock_active:  # XOR - uppercase if either is true
+                        keyboard_input.process_key_input(ord(letter.upper()))
+                    else:
+                        keyboard_input.process_key_input(ord(letter.lower()))
+                    return
+
+            # Then check other special characters (space, punctuation, etc.)
+            special_chars = {
+                'space': ' ',
+                'tab': '\t',
+                '-': '-', '=': '=',
+                '[': '[', ']': ']', '\\': '\\',
+                ';': ';', "'": "'",
+                ',': ',', '.': '.', '/': '/',
+                '`': '`'
+            }
+
+            # Shifted versions of special characters
+            shifted_special_chars = {
+                '-': '_', '=': '+',
+                '[': '{', ']': '}', '\\': '|',
+                ';': ':', "'": '"',
+                ',': '<', '.': '>', '/': '?',
+                '`': '~'
+            }
+
+            for char in special_chars:
+                if keyboard.is_pressed(char):
+                    if shift_pressed and char in shifted_special_chars:
+                        keyboard_input.process_key_input(ord(shifted_special_chars[char]))
+                    else:
+                        keyboard_input.process_key_input(ord(special_chars[char]))
+                    return
+
 
 # Function to save current state (both canvas and text)
 def save_state():
     return {
         'canvas': imgCanvas.copy(),
-        'text_objects': keyboard_input.text_objects.copy()
+        'text_objects': list(keyboard_input.text_objects)  # Convert deque to list for proper copying
     }
 
 
@@ -88,7 +151,7 @@ def save_state():
 def restore_state(state):
     global imgCanvas
     imgCanvas = state['canvas'].copy()
-    keyboard_input.text_objects = state['text_objects'].copy()
+    keyboard_input.text_objects = deque(state['text_objects'], maxlen=20)  # Convert back to deque
 
 
 # Function to save the canvas
@@ -357,6 +420,9 @@ while run:
                     keyboard_input.check_drag_start(center_x, center_y)
             else:
                 keyboard_input.update_drag(center_x, center_y)
+                # Save state after text movement
+                undoStack.append(save_state())
+                redoStack.clear()
 
             # Visual feedback
             cv2.circle(img, (center_x, center_y), 15, (0, 255, 255), cv2.FILLED)
