@@ -16,7 +16,7 @@ st.set_page_config(
 
 # Constants
 CORRECT_CODE = "12345"
-VIRTUAL_PAINTER_URL = "http://localhost:8501"  # URL for the Virtual Painter app
+VIRTUAL_PAINTER_URL = "http://localhost:8502"  # URL for the Virtual Painter app
 
 
 # Custom CSS

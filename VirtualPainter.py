@@ -28,7 +28,11 @@ with st.sidebar:
     st.info("Adjust the sizes above. Changes will take effect immediately.")
 
 if st.sidebar.button("Logout"):
-    # Redirect using JavaScript
+    if 'camera' in st.session_state:
+        st.session_state.camera.release()  # Turn off camera
+        del st.session_state.camera        # Clean up the session
+
+    # Redirect using meta refresh
     st.markdown(
         """
         <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
