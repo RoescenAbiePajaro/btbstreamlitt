@@ -226,6 +226,7 @@ def main():
     show_entry_page()
 
 
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--painter":
         import VirtualPainter

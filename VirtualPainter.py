@@ -19,14 +19,32 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Add sidebar settings for brush and eraser sizes
+with st.sidebar:
+    st.header("Tool Settings")
+    brushSize = st.slider("Brush Size", 1, 50, 10, key="brush_size")
+    eraserSize = st.slider("Eraser Size", 10, 200, 100, key="eraser_size")
+    st.markdown("---")
+    st.info("Adjust the sizes above. Changes will take effect immediately.")
+
+if st.sidebar.button("Logout"):
+    # Redirect using JavaScript
+    st.markdown(
+        """
+        <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
+        """,
+        unsafe_allow_html=True
+    )
 
 # Variables
-brushSize = 10
-eraserSize = 100
-fps = 60
+# brushSize = 10
+# eraserSize = 100
+fps = 50
 time_per_frame = 5.0 / fps
 
 # Load header images
+
+
 folderPath = 'header'
 myList = sorted(os.listdir(folderPath))
 overlayList = [cv2.imread(f"{folderPath}/{imPath}") for imPath in myList]
@@ -206,9 +224,11 @@ st.title("Beyond The Brush - Virtual Painter")
 # Camera input
 run = st.checkbox('Run', value=True)
 FRAME_WINDOW = st.image([])
-cap = cv2.VideoCapture(0)
-cap.set(3, 1280)  # Width
-cap.set(4, 720)  # Height
+if 'cap' not in st.session_state:
+    st.session_state.cap = cv2.VideoCapture(0)
+    st.session_state.cap.set(3, 1280)
+    st.session_state.cap.set(4, 720)
+cap = st.session_state.cap
 
 # Assigning Detector
 detector = htm.handDetector(detectionCon=0.85)
@@ -258,35 +278,30 @@ while run:
                 elif 128 < x1 < 256:  # Pink
                     header = overlayList[2]
                     drawColor = (255, 0, 255)  # Pink
-                    st.toast("Pink brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 256 < x1 < 384:  # Blue
                     header = overlayList[3]
                     drawColor = (255, 0, 0)  # Blue
-                    st.toast("Blue brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 384 < x1 < 512:  # Green
                     header = overlayList[4]
                     drawColor = (0, 255, 0)  # Green
-                    st.toast("Green brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 512 < x1 < 640:  # Yellow
                     header = overlayList[5]
                     drawColor = (0, 255, 255)  # Yellow
-                    st.toast("Yellow brush selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
 
                 elif 640 < x1 < 768:  # Eraser
                     header = overlayList[6]
                     drawColor = (0, 0, 0)  # Eraser
-                    st.toast("Eraser selected")
                     show_guide = False
                     keyboard_input.active = False  # Close keyboard input if open
                     # Delete selected text if any
@@ -317,7 +332,6 @@ while run:
 
                 elif 1024 < x1 < 1152:  # Guide
                     header = overlayList[9]
-                    st.toast("Guide selected")
                     # Toggle guide display
                     show_guide = True  # Always show guide when selected
                     current_guide_index = 0  # Reset to first guide
@@ -327,7 +341,6 @@ while run:
                 elif 1155 < x1 < 1280:
                     if not keyboard_input.active:
                         keyboard_input.active = True
-                        st.toast("Keyboard Mode Opened")
                     header = overlayList[10]
                     show_guide = False
 
@@ -498,6 +511,8 @@ while run:
     elapsed_time = time.time() - start_time
     if elapsed_time < time_per_frame:
         time.sleep(time_per_frame - elapsed_time)
+
+
 
 # Release resources when stopped
 cap.release()
