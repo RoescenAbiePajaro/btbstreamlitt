@@ -6,6 +6,7 @@ import subprocess
 import sys
 import webbrowser
 
+
 # Set page config first
 st.set_page_config(
     page_title="Beyond The Brush",
