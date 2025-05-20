@@ -83,25 +83,32 @@ def register_student():
         if submitted:
             if not name or not access_code:
                 st.error("Please fill in all fields")
+            elif len(name) != 8:
+                st.error("Name must be exactly 8 characters long")
             else:
-                # Check if access code exists in MongoDB
-                code_data = access_codes_collection.find_one({"code": access_code})
-                if code_data:
-                    # Register student
-                    student_data = {
-                        "name": name,
-                        "access_code": access_code,
-                        "registered_at": time.time(),
-                        "educator_id": code_data.get("educator_id", "")
-                    }
-                    students_collection.insert_one(student_data)
-                    st.success("Registration successful! You can now log in.")
+                # Check if name already exists
+                existing_student = students_collection.find_one({"name": name})
+                if existing_student:
+                    st.warning("This name is already registered. Please use a different name.")
                 else:
-                    st.error("Invalid access code. Please ask your educator for a valid code.")
+                    # Check if access code exists in MongoDB
+                    code_data = access_codes_collection.find_one({"code": access_code})
+                    if code_data:
+                        # Register student
+                        student_data = {
+                            "name": name,
+                            "access_code": access_code,
+                            "registered_at": time.time(),
+                            "educator_id": code_data.get("educator_id", "")
+                        }
+                        students_collection.insert_one(student_data)
+                        st.success("Registration successful! You can now log in.")
+                    else:
+                        st.error("Invalid access code. Please ask your educator for a valid code.")
 
     # Add Back button
     if st.button("Back to Login", key="back_btn"):
-        subprocess.Popen(["streamlit", "run", "app.py"])
+        subprocess.Popen(["streamlit", "run", "Login"])
         st.stop()
 
 
