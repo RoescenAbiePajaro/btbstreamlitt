@@ -2,9 +2,13 @@ import streamlit as st
 from pymongo import MongoClient
 import time
 import subprocess
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient(os.getenv("MONGODB_URI"))
 db = client["beyond_the_brush"]
 access_codes_collection = db["access_codes"]
 students_collection = db["students"]

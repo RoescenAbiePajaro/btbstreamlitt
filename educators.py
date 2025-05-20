@@ -2,10 +2,14 @@ import streamlit as st
 from pymongo import MongoClient
 import subprocess
 import time
+import os
+from dotenv import load_dotenv
+# Load environment variables
+load_dotenv()
 
 # MongoDB connection with error handling
 try:
-    client = MongoClient("mongodb://localhost:27017/")
+    client = MongoClient(os.getenv("MONGODB_URI"))
     db = client["beyond_the_brush"]
     students_collection = db["students"]
     access_codes_collection = db["access_codes"]

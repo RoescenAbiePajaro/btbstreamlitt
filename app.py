@@ -5,12 +5,18 @@ import subprocess
 import sys
 import webbrowser
 from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
 
-# MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client["beyond_the_brush"]
-access_codes_collection = db["access_codes"]
-students_collection = db["students"]  # Added students collection
+
+load_dotenv()
+
+# Connect to MongoDB Atlas
+MONGODB_URI = os.getenv("MONGODB_URI")  # Reads from .env
+client = MongoClient(MONGODB_URI)  # Automatically handles SRV connection
+db = client["beyond_the_brush"]  # Your database name
+students_collection = db["students"]  # Your collection
+access_codes_collection = db["access_codes"]  # Another collection
 
 # Set page config first
 st.set_page_config(
