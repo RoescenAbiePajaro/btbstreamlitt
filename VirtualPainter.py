@@ -6,7 +6,6 @@ import os
 import time
 import HandTrackingModule as htm
 from KeyboardInput import KeyboardInput
-from PIL import Image
 import keyboard
 from collections import deque
 
@@ -351,10 +350,7 @@ while run:
                         redoStack.append(save_state())
                         state = undoStack.pop()
                         restore_state(state)
-                        st.toast("Undo")
-                    else:
-                        st.toast("Nothing to undo")
-                    show_guide = False
+                        show_guide = False
 
                 elif 896 < x1 < 1024:  # Redo
                     header = overlayList[8]
@@ -362,10 +358,7 @@ while run:
                         undoStack.append(save_state())
                         state = redoStack.pop()
                         restore_state(state)
-                        st.toast("Redo")
-                    else:
-                        st.toast("Nothing to redo")
-                    show_guide = False
+                        show_guide = False
 
                 elif 1024 < x1 < 1152:  # Guide
                     header = overlayList[9]

@@ -1,15 +1,28 @@
 import streamlit as st
-from pymongo import MongoClient
 import subprocess
 import time
 import os
 from dotenv import load_dotenv
+from pymongo import MongoClient
+
 # Load environment variables
 load_dotenv()
 
+st.set_page_config(
+    page_title="Educator Portal",
+    page_icon="static/icons.png",
+    layout="wide"
+)
+
 # MongoDB connection with error handling
 try:
-    client = MongoClient(os.getenv("MONGODB_URI"))
+    MONGODB_URI = os.getenv("MONGODB_URI")
+    if not MONGODB_URI:
+        raise ValueError("MONGODB_URI environment variable is not set")
+
+    client = MongoClient(MONGODB_URI)
+    # Test the connection
+    client.admin.command('ping')
     db = client["beyond_the_brush"]
     students_collection = db["students"]
     access_codes_collection = db["access_codes"]
@@ -19,12 +32,6 @@ except Exception as e:
 
 
 def admin_portal():
-    st.set_page_config(
-        page_title="Educator Portal",
-        page_icon="static/icons.png",
-        layout="wide"
-    )
-
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Student Registrations", "Access Codes", "Virtual Painter"])
 

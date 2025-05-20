@@ -5,22 +5,29 @@ import subprocess
 import os
 from dotenv import load_dotenv
 
+# Set page config first, before any other Streamlit commands
+st.set_page_config(
+    page_title="Student Registration",
+    page_icon="static/icons.png",
+    layout="centered"
+)
+
 load_dotenv()
 
-# MongoDB connection
-client = MongoClient(os.getenv("MONGODB_URI"))
-db = client["beyond_the_brush"]
-access_codes_collection = db["access_codes"]
-students_collection = db["students"]
+# MongoDB connection with error handling
+try:
+    client = MongoClient(os.getenv("MONGODB_URI"))
+    # Test the connection
+    client.admin.command('ping')
+    db = client["beyond_the_brush"]
+    access_codes_collection = db["access_codes"]
+    students_collection = db["students"]
+except Exception as e:
+    st.error(f"Failed to connect to MongoDB: {str(e)}")
+    st.stop()
 
 
 def register_student():
-    st.set_page_config(
-        page_title="Student Registration",
-        page_icon="static/icons.png",
-        layout="centered"
-    )
-
     st.markdown("""
     <style>
     .stTextInput > div > div > input {
