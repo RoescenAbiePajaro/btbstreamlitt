@@ -11,6 +11,7 @@ import keyboard
 from collections import deque
 
 
+
 # Set page config first
 st.set_page_config(
     page_title="Welcome to Beyond The Brush",
@@ -19,13 +20,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Add sidebar settings for brush and eraser sizes
-with st.sidebar:
-    st.header("Tool Settings")
-    brushSize = st.slider("Brush Size", 1, 50, 10, key="brush_size")
-    eraserSize = st.slider("Eraser Size", 10, 200, 100, key="eraser_size")
-    st.markdown("---")
-    st.info("Adjust the sizes above. Changes will take effect immediately.")
+# Add loading screen CSS
+st.markdown(
+    """
+    <style>
+    /* Progress bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        height: 10px;
+        border-radius: 5px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+
+# # Add sidebar settings for brush and eraser sizes
+# with st.sidebar:
+#     st.header("Tool Settings")
+#     brushSize = st.slider("Brush Size", 1, 50, 10, key="brush_size")
+#     eraserSize = st.slider("Eraser Size", 10, 200, 100, key="eraser_size")
+#     st.info("Adjust the sizes above. Changes will take effect immediately.")
 
 if st.sidebar.button("Logout"):
     if 'camera' in st.session_state:
@@ -41,8 +58,8 @@ if st.sidebar.button("Logout"):
     )
 
 # Variables
-# brushSize = 10
-# eraserSize = 100
+brushSize = 10
+eraserSize = 100
 fps = 50
 time_per_frame = 5.0 / fps
 
@@ -228,10 +245,26 @@ st.title("Beyond The Brush - Virtual Painter")
 # Camera input
 run = st.checkbox('Run', value=True)
 FRAME_WINDOW = st.image([])
-if 'cap' not in st.session_state:
-    st.session_state.cap = cv2.VideoCapture(0)
-    st.session_state.cap.set(3, 1280)
-    st.session_state.cap.set(4, 720)
+
+# Add camera loading state
+if 'camera_initialized' not in st.session_state:
+    st.session_state.camera_initialized = False
+
+# Show loading spinner while initializing camera
+if not st.session_state.camera_initialized:
+    with st.spinner('Initializing camera...'):
+        if 'cap' not in st.session_state:
+            st.session_state.cap = cv2.VideoCapture(0)
+            st.session_state.cap.set(3, 1280)
+            st.session_state.cap.set(4, 720)
+            # Test if camera opened successfully
+            if st.session_state.cap.isOpened():
+                st.session_state.camera_initialized = True
+            else:
+                st.error('Failed to initialize camera. Please check your camera connection.')
+                st.stop()
+        time.sleep(1)  # Brief pause to show loading state
+
 cap = st.session_state.cap
 
 # Assigning Detector
