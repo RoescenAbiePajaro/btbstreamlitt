@@ -549,7 +549,5 @@ while run:
     if elapsed_time < time_per_frame:
         time.sleep(time_per_frame - elapsed_time)
 
-
-
 # Release resources when stopped
 cap.release()

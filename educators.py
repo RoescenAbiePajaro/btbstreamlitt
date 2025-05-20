@@ -27,7 +27,17 @@ def admin_portal():
     # Add logout button at the bottom of sidebar
     st.sidebar.markdown("---")  # Add a separator
     if st.sidebar.button("Logout"):
-        st.switch_page("app.py")
+        # Clear session state
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+
+        # Redirect using meta refresh
+        st.markdown(
+            """
+            <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
+            """,
+            unsafe_allow_html=True
+        )
 
     if page == "Student Registrations":
         st.title("Student Registrations")
