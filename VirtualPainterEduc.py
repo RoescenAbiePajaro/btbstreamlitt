@@ -217,20 +217,35 @@ def run_virtual_painter():
         with st.spinner('Initializing camera...'):
             try:
                 if 'cap' not in st.session_state:
-                    # Try different camera indices
+                    # Try different camera indices with more detailed error handling
+                    camera_found = False
                     for camera_index in [0, 1, 2]:
-                        st.session_state.cap = cv2.VideoCapture(camera_index)
-                        if st.session_state.cap.isOpened():
-                            # Test if we can actually read a frame
-                            ret, _ = st.session_state.cap.read()
-                            if ret:
-                                break
+                        try:
+                            st.session_state.cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)  # Try DirectShow backend
+                            if st.session_state.cap.isOpened():
+                                # Test if we can actually read a frame
+                                ret, frame = st.session_state.cap.read()
+                                if ret and frame is not None:
+                                    camera_found = True
+                                    st.success(f'Successfully initialized camera at index {camera_index}')
+                                    break
+                                else:
+                                    st.session_state.cap.release()
+                                    st.warning(f'Camera at index {camera_index} opened but failed to read frame')
                             else:
-                                st.session_state.cap.release()
+                                st.warning(f'Failed to open camera at index {camera_index}')
+                        except Exception as e:
+                            st.warning(f'Error trying camera index {camera_index}: {str(e)}')
+                            continue
 
-                    if not st.session_state.cap.isOpened():
-                        st.error(
-                            'Failed to initialize camera. Please check your camera connection and make sure no other application is using it.')
+                    if not camera_found:
+                        st.error('''
+                        Failed to initialize camera. Please check:
+                        1. Your camera is properly connected
+                        2. No other application is using the camera
+                        3. Your camera drivers are up to date
+                        4. You have granted camera permissions to the application
+                        ''')
                         st.stop()
 
                     # Set camera properties
