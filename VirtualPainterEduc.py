@@ -13,7 +13,6 @@ import av
 import threading
 from queue import Queue
 
-
 class VirtualPainterProcessor(VideoProcessorBase):
     def __init__(self):
         self.detector = htm.handDetector(detectionCon=0.85)
@@ -219,8 +218,7 @@ class VirtualPainterProcessor(VideoProcessorBase):
                                 self.eraserSize = min(200, self.eraserSize + 5)
                             else:
                                 self.brushSize = min(50, self.brushSize + 1)
-                        st.toast(
-                            f"{'Eraser' if self.drawColor == (0, 0, 0) else 'Brush'} size: {self.eraserSize if self.drawColor == (0, 0, 0) else self.brushSize}")
+                        st.toast(f"{'Eraser' if self.drawColor == (0, 0, 0) else 'Brush'} size: {self.eraserSize if self.drawColor == (0, 0, 0) else self.brushSize}")
 
                 cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), self.drawColor, cv2.FILLED)
 
@@ -325,7 +323,6 @@ class VirtualPainterProcessor(VideoProcessorBase):
 
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-
 def run_virtual_painter():
     st.title("Beyond The Brush - Virtual Painter")
 
@@ -352,7 +349,6 @@ def run_virtual_painter():
         media_stream_constraints={"video": True, "audio": False},
         async_processing=True,
     )
-
 
 if __name__ == "__main__":
     run_virtual_painter()
