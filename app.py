@@ -167,7 +167,8 @@ def show_entry_page():
                 st.session_state.submitted = True
                 verify_code(code, "educator", "")
 
-# --- MAIN ---
+# --- MAIN --- h
+
 def main():
     show_entry_page()
 
