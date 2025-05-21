@@ -6,7 +6,7 @@ import subprocess
 import sys
 import webbrowser
 
-# Set page config first
+# Set pages config first
 st.set_page_config(
     page_title="Beyond The Brush",
     page_icon="static/icons.png",
@@ -190,7 +190,7 @@ def load_css():
 
 
 def show_entry_page():
-    """Show the main entry page with role selection and code entry"""
+    """Show the main entry pages with role selection and code entry"""
     load_css()
 
     # Initialize session state for form submission

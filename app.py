@@ -7,10 +7,15 @@ import sys
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+import json
+from register import register_student, students_collection, access_codes_collection
+from educators import admin_portal
+from VirtualPainter import run as run_virtual_painter
+from VirtualPainterEduc import run_virtual_painter as run_virtual_painter_educ
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Home",
+    page_title="Beyond The Brush",
     page_icon="static/icons.png",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -28,7 +33,7 @@ try:
     client = MongoClient(
         MONGODB_URI,
         tls=True,
-        tlsAllowInvalidCertificates=False,  # Changed to False for better security
+        tlsAllowInvalidCertificates=False,
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000
@@ -44,11 +49,13 @@ except Exception as e:
     st.stop()
 
 # --- SESSION STATE ---
-st.session_state.setdefault("is_loading", False)
-st.session_state.setdefault("submitted", False)
-st.session_state.setdefault("role", "Student")
-st.session_state.setdefault("access_granted", False)
-st.session_state.setdefault("username", "")
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_type' not in st.session_state:
+    st.session_state.user_type = None
+if 'username' not in st.session_state:
+    st.session_state.username = None
+
 
 # --- STYLING ---
 def load_css():
@@ -84,18 +91,27 @@ def load_css():
         justify-content: center;
         gap: 2rem;
     }
+    /* Progress bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        height: 10px;
+        border-radius: 5px;
+    }
     </style>
     """, unsafe_allow_html=True)
+
 
 # --- UTILS ---
 def set_loading(state=True):
     st.session_state.is_loading = state
+
 
 def show_loading_screen(duration=2.0):
     set_loading(True)
     with st.spinner("Launching application..."):
         time.sleep(duration)
     set_loading(False)
+
 
 def launch_virtual_painter(role):
     if getattr(sys, 'frozen', False):
@@ -104,7 +120,8 @@ def launch_virtual_painter(role):
         subprocess.Popen([sys.executable, "-m", "streamlit", "run", "VirtualPainter.py", "--", role])
         time.sleep(1)
 
-    st.markdown(f"""<meta http-equiv="refresh" content="0; url='http://localhost:8501'">""", unsafe_allow_html=True)
+    st.markdown(f"""<meta http-equiv="refresh" content="0; url='./'">""", unsafe_allow_html=True)
+
 
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
@@ -113,67 +130,69 @@ def verify_code(code, role, name):
 
     if role == "student":
         if student_data:
-            st.session_state.access_granted = True
+            st.session_state.authenticated = True
+            st.session_state.user_type = "student"
             st.session_state.username = name
             st.success("Access granted!")
-            show_loading_screen(1.5)
-            launch_virtual_painter(role)
+            st.rerun()
         else:
             st.error("Invalid name or code.")
     elif role == "educator" and code_data:
-        st.session_state.access_granted = True
+        st.session_state.authenticated = True
+        st.session_state.user_type = "educator"
         st.success("Access granted!")
-        show_loading_screen(1.5)
-        subprocess.Popen(["streamlit", "run", "educators.py"])
+        st.rerun()
     else:
         st.error("Access code incorrect.")
 
-# --- ENTRY PAGE ---
-def show_entry_page():
-    load_css()
-
-    if st.session_state.access_granted:
-        st.info("Redirecting...")
-        return
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("<h1>Beyond The Brush</h1>", unsafe_allow_html=True)
-        st.markdown("### Select your role:")
-        role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
-        st.session_state.role = role
-
-        if role == "Student" and not st.session_state.access_granted:
-            st.markdown("#### Login")
-            name = st.text_input("Enter your name", placeholder="Your name", key="name_input")
-            code = st.text_input("Enter access code", placeholder="Access code", type="password", key="access_code")
-
-            if st.button("Login") or st.session_state.submitted:
-                st.session_state.submitted = True
-                if st.session_state.access_granted:
-                    st.success("Access granted!")
-                verify_code(code, "student", name)
-
-            if st.button("Register New Student"):
-                subprocess.Popen(["streamlit", "run", "register.py"])
-                st.stop()
-
-
-        elif role == "Educator" and not st.session_state.access_granted:
-            st.markdown("#### Educator Access")
-            code = st.text_input("Access code", type="password", key="admin_code")
-
-            if st.button("Login") or st.session_state.submitted:
-                st.session_state.submitted = True
-                verify_code(code, "educator", "")
 
 # --- MAIN ---
 def main():
-    show_entry_page()
+    load_css()
+
+    if not st.session_state.authenticated:
+        st.title("Beyond The Brush")
+
+        # Create three columns for the buttons
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col2:  # Center column
+            st.markdown("### Select your role:")
+            role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
+
+            if role == "Student":
+                st.markdown("#### Login")
+                name = st.text_input("Enter your name", placeholder="Your name", key="name_input")
+                code = st.text_input("Enter access code", placeholder="Access code", type="password", key="access_code")
+
+                if st.button("Login"):
+                    verify_code(code, "student", name)
+
+                if st.button("Register New Student"):
+                    st.session_state.user_type = "register"
+                    st.rerun()
+
+            elif role == "Educator":
+                st.markdown("#### Educator Access")
+                code = st.text_input("Access code", type="password", key="admin_code")
+
+                if st.button("Login"):
+                    verify_code(code, "educator", "")
+
+    else:
+        # User is authenticated, show appropriate page
+        if st.session_state.user_type == "student":
+            st.switch_page("pages/2_student.py")
+        elif st.session_state.user_type == "educator":
+            st.switch_page("pages/1_educator.py")
+        elif st.session_state.user_type == "register":
+            st.switch_page("pages/3_register.py")
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--painter":
         import VirtualPainter
+
         if not st.session_state.get('access_granted'):
             st.error("Please authenticate from main screen.")
             st.stop()

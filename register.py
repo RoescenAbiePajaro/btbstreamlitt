@@ -6,7 +6,7 @@ import subprocess
 import os
 from dotenv import load_dotenv
 
-# Set page config first, before any other Streamlit commands
+# Set pages config first, before any other Streamlit commands
 st.set_page_config(
     page_title="Student Registration",
     page_icon="static/icons.png",
@@ -121,7 +121,7 @@ def register_student():
     col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
     with col2:  # Place button in middle column
         if st.button("Back to Login", use_container_width=True):
-            st.markdown("<meta http-equiv='refresh' content='0; url=http://localhost:8501/' />", unsafe_allow_html=True)
+            st.markdown("<meta http-equiv='refresh' content='0; url='/' />", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     register_student()
