@@ -29,7 +29,6 @@ try:
         MONGODB_URI,
         tls=True,
         tlsAllowInvalidCertificates=False,  # Changed to False for better security
-        tlsInsecure=False,  # Added to ensure secure connection
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000

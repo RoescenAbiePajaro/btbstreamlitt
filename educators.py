@@ -46,7 +46,6 @@ def get_mongodb_connection():
             MONGODB_URI,
             tls=True,
             tlsAllowInvalidCertificates=False,
-            tlsInsecure=False,
             serverSelectionTimeoutMS=5000,
             connectTimeoutMS=10000,
             socketTimeoutMS=10000
