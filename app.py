@@ -28,7 +28,7 @@ try:
     client = MongoClient(
         MONGODB_URI,
         tls=True,
-        tlsAllowInvalidCertificates=False,  # Changed to False for better security
+        tlsAllowInvalidCertificates=False,
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000
@@ -98,13 +98,10 @@ def show_loading_screen(duration=2.0):
     set_loading(False)
 
 def launch_virtual_painter(role):
-    if getattr(sys, 'frozen', False):
-        subprocess.Popen([sys.executable, "VirtualPainter.py", role])
-    else:
-        subprocess.Popen([sys.executable, "-m", "streamlit", "run", "VirtualPainter.py", "--", role])
-        time.sleep(1)
-
-    st.markdown(f"""<meta http-equiv="refresh" content="0; url='http://localhost:8501'">""", unsafe_allow_html=True)
+    # Instead of launching a new process, we'll use Streamlit's navigation
+    st.session_state.virtual_painter_active = True
+    st.session_state.role = role
+    st.rerun()
 
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
@@ -124,7 +121,8 @@ def verify_code(code, role, name):
         st.session_state.access_granted = True
         st.success("Access granted!")
         show_loading_screen(1.5)
-        subprocess.Popen(["streamlit", "run", "educators.py"])
+        st.session_state.educator_active = True
+        st.rerun()
     else:
         st.error("Access code incorrect.")
 
@@ -155,9 +153,8 @@ def show_entry_page():
                 verify_code(code, "student", name)
 
             if st.button("Register New Student"):
-                subprocess.Popen(["streamlit", "run", "register.py"])
-                st.stop()
-
+                st.session_state.show_registration = True
+                st.rerun()
 
         elif role == "Educator" and not st.session_state.access_granted:
             st.markdown("#### Educator Access")
@@ -169,14 +166,17 @@ def show_entry_page():
 
 # --- MAIN ---
 def main():
-    show_entry_page()
+    if st.session_state.get('show_registration'):
+        import register
+        register.register_student()
+    elif st.session_state.get('educator_active'):
+        import educators
+        educators.admin_portal()
+    elif st.session_state.get('virtual_painter_active'):
+        import VirtualPainter
+        VirtualPainter.run_application(st.session_state.role)
+    else:
+        show_entry_page()
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--painter":
-        import VirtualPainter
-        if not st.session_state.get('access_granted'):
-            st.error("Please authenticate from main screen.")
-            st.stop()
-        VirtualPainter.run_application(sys.argv[2] if len(sys.argv) > 2 else "student")
-    else:
-        main()
+    main()

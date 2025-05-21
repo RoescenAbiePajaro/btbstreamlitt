@@ -1,5 +1,4 @@
 import streamlit as st
-import subprocess
 import time
 import os
 from pymongo import MongoClient
@@ -109,15 +108,8 @@ def admin_portal():
 
         # Clear all session state
         clear_session_state()
-
-        # Redirect to main page
-        st.markdown(
-            """
-            <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
-            """,
-            unsafe_allow_html=True
-        )
-        st.stop()
+        st.session_state.educator_active = False
+        st.rerun()
 
     # Clear virtual painter state when switching to other pages
     if page != "Virtual Painter" and st.session_state.virtual_painter_active:
