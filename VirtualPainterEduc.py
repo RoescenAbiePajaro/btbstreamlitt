@@ -217,9 +217,20 @@ def run_virtual_painter():
         with st.spinner('Initializing camera...'):
             try:
                 if 'cap' not in st.session_state:
-                    st.session_state.cap = cv2.VideoCapture(0)
+                    # Try different camera indices
+                    for camera_index in [0, 1, 2]:
+                        st.session_state.cap = cv2.VideoCapture(camera_index)
+                        if st.session_state.cap.isOpened():
+                            # Test if we can actually read a frame
+                            ret, _ = st.session_state.cap.read()
+                            if ret:
+                                break
+                            else:
+                                st.session_state.cap.release()
+
                     if not st.session_state.cap.isOpened():
-                        st.error('Failed to initialize camera. Please check your camera connection.')
+                        st.error(
+                            'Failed to initialize camera. Please check your camera connection and make sure no other application is using it.')
                         st.stop()
 
                     # Set camera properties
