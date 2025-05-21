@@ -6,6 +6,7 @@ from pymongo import MongoClient
 from contextlib import contextmanager
 from VirtualPainterEduc import run_virtual_painter
 
+
 st.set_page_config(
     page_title="Educator Portal",
     page_icon="static/icons.png",
