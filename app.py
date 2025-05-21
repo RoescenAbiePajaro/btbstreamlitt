@@ -28,7 +28,7 @@ try:
     client = MongoClient(
         MONGODB_URI,
         tls=True,
-        tlsAllowInvalidCertificates=True,  # Changed to False for better security
+        tlsAllowInvalidCertificates=False,  # Changed to False for better security
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000
