@@ -45,7 +45,7 @@ def get_mongodb_connection():
         client = MongoClient(
             MONGODB_URI,
             tls=True,
-            tlsAllowInvalidCertificates=False,
+            tlsAllowInvalidCertificates=True,
             serverSelectionTimeoutMS=5000,
             connectTimeoutMS=10000,
             socketTimeoutMS=10000
