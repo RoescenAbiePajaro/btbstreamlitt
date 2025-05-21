@@ -9,7 +9,6 @@ from KeyboardInput import KeyboardInput
 import keyboard
 from collections import deque
 
-
 def run_virtual_painter():
     # Add loading screen CSS
     st.markdown(

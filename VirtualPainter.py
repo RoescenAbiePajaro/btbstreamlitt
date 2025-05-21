@@ -14,7 +14,7 @@ import subprocess
 
 # Set page config first
 st.set_page_config(
-    page_title="Welcome to Beyond The Brush",
+    page_title="Beyond The Brush (Students)",
     page_icon="static/icons.png",  # e.g., "assets/icon.png"
     layout="centered",
     initial_sidebar_state="collapsed"

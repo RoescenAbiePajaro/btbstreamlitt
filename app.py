@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Beyond The Brush",
+    page_title="Home",
     page_icon="static/icons.png",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -151,7 +151,6 @@ def show_entry_page():
 
         elif role == "Educator" and not st.session_state.access_granted:
             st.markdown("#### Educator Access")
-            st.info("Enter your admin access code.")
             code = st.text_input("Access code", type="password", key="admin_code")
 
             if st.button("Login") or st.session_state.submitted:
