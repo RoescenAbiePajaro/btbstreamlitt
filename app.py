@@ -8,10 +8,7 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import json
-from register import register_student, students_collection, access_codes_collection
-from educators import admin_portal
-from VirtualPainter import run as run_virtual_painter
-from VirtualPainterEduc import run_virtual_painter as run_virtual_painter_educ
+from register import  students_collection, access_codes_collection
 
 # --- PAGE CONFIG ---
 st.set_page_config(

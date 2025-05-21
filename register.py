@@ -6,13 +6,6 @@ import subprocess
 import os
 from dotenv import load_dotenv
 
-# Set pages config first, before any other Streamlit commands
-st.set_page_config(
-    page_title="Student Registration",
-    page_icon="static/icons.png",
-    layout="centered"
-)
-
 load_dotenv()
 
 # MongoDB connection with error handling
