@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # Constants
-CORRECT_CODE = "12345"
+CORRECT_CODE = "hswh"
 VIRTUAL_PAINTER_URL = "http://localhost:8501"  # URL for the Virtual Painter app
 
 # Initialize global loading state

@@ -7,8 +7,6 @@ import sys
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
-import json
-from register import register_student, students_collection, access_codes_collection
 
 # --- PAGE CONFIG ---
 st.set_page_config(
