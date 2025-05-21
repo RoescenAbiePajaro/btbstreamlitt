@@ -2,13 +2,9 @@ import streamlit as st
 import subprocess
 import time
 import os
-from dotenv import load_dotenv
 from pymongo import MongoClient
 from contextlib import contextmanager
 import VirtualPainterEduc  # Import the Virtual Painter module
-
-# Load environment variables
-load_dotenv()
 
 st.set_page_config(
     page_title="Educator Portal",
@@ -41,9 +37,9 @@ def get_mongodb_connection():
     """Context manager for MongoDB connection"""
     client = None
     try:
-        MONGODB_URI = os.getenv("MONGODB_URI")
+        MONGODB_URI = st.secrets["MONGODB_URI"]
         if not MONGODB_URI:
-            raise ValueError("MONGODB_URI environment variable is not set")
+            raise ValueError("MONGODB_URI not set in secrets.toml")
 
         # Configure MongoDB client with SSL settings
         client = MongoClient(

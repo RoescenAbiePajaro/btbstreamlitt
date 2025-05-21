@@ -20,9 +20,9 @@ st.set_page_config(
 load_dotenv()
 
 try:
-    MONGODB_URI = os.getenv("MONGODB_URI")
+    MONGODB_URI = st.secrets["MONGODB_URI"]
     if not MONGODB_URI:
-        raise ValueError("MONGODB_URI not set in .env")
+        raise ValueError("MONGODB_URI not set in secrets.toml")
 
     # Configure MongoDB client with SSL settings
     client = MongoClient(
