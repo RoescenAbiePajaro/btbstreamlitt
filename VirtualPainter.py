@@ -51,9 +51,14 @@ if st.sidebar.button("Logout"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
 
-    # Return to main page
-    st.session_state.virtual_painter_active = False
-    st.rerun()
+    # Redirect to main page
+    st.markdown(
+        """
+        <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
+        """,
+        unsafe_allow_html=True
+    )
+    st.stop()
 
 # Variables
 brushSize = 10

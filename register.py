@@ -2,6 +2,7 @@
 import streamlit as st
 from pymongo import MongoClient
 import time
+import subprocess
 import os
 from dotenv import load_dotenv
 
@@ -120,8 +121,7 @@ def register_student():
     col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
     with col2:  # Place button in middle column
         if st.button("Back to Login", use_container_width=True):
-            st.session_state.show_registration = False
-            st.rerun()
+            st.markdown("<meta http-equiv='refresh' content='0; url=http://localhost:8501/' />", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     register_student()
