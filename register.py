@@ -76,7 +76,7 @@ def register_student():
     st.title("Student Registration")
 
     with st.form("registration_form"):
-        name = st.text_input("Full Name", placeholder="Enter your full name")
+        name = st.text_input("Username", placeholder="Enter your Username")
         access_code = st.text_input("Access Code", placeholder="Ask your educator for the access code")
 
         submitted = st.form_submit_button("Register")

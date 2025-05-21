@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from contextlib import contextmanager
+import VirtualPainterEduc  # Import the Virtual Painter module
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +30,10 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Initialize session state for Virtual Painter if not exists
+if 'virtual_painter_active' not in st.session_state:
+    st.session_state.virtual_painter_active = False
 
 
 @contextmanager
@@ -56,7 +61,28 @@ def get_mongodb_connection():
 
 
 def clear_session_state():
-    """Clear all session state variables"""
+    """Clear all session state variables and release resources"""
+    # Release camera if it exists
+    if 'cap' in st.session_state:
+        try:
+            st.session_state.cap.release()
+        except:
+            pass
+        del st.session_state.cap
+
+    # Clear virtual painter state
+    if 'virtual_painter_active' in st.session_state:
+        del st.session_state.virtual_painter_active
+
+    # Clear camera initialization state
+    if 'camera_initialized' in st.session_state:
+        del st.session_state.camera_initialized
+
+    # Clear editing state
+    if 'editing_student' in st.session_state:
+        del st.session_state.editing_student
+
+    # Clear all other session state variables
     for key in list(st.session_state.keys()):
         del st.session_state[key]
 
@@ -65,18 +91,37 @@ def admin_portal():
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Student Registrations", "Access Codes", "Virtual Painter"])
 
+    # Debug information
+    st.sidebar.write(f"Current page: {page}")
+
     # Add logout button at the bottom of sidebar
     st.sidebar.markdown("---")  # Add a separator
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button("Logout", key="educator_portal_logout"):
+        # Release camera if it exists
+        if 'camera' in st.session_state:
+            st.session_state.camera.release()  # Turn off camera
+            del st.session_state.camera  # Clean up the session
+
+        # Clear all session state
         clear_session_state()
+
+        # Redirect to main page
         st.markdown(
             """
             <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
             """,
             unsafe_allow_html=True
         )
+        st.stop()
+
+    # Clear virtual painter state when switching to other pages
+    if page != "Virtual Painter" and st.session_state.virtual_painter_active:
+        clear_session_state()
+        st.session_state.virtual_painter_active = False
+        st.rerun()
 
     if page == "Student Registrations":
+        st.session_state.virtual_painter_active = False
         st.title("Student Registrations")
 
         with get_mongodb_connection() as (students_collection, _):
@@ -122,6 +167,7 @@ def admin_portal():
                 st.info("No students registered yet.")
 
     elif page == "Access Codes":
+        st.session_state.virtual_painter_active = False
         st.title("Access Codes Management")
 
         with get_mongodb_connection() as (_, access_codes_collection):
@@ -138,26 +184,29 @@ def admin_portal():
                             access_codes_collection.delete_one({"_id": code["_id"]})
                             st.rerun()
 
-            # Add new access code
-            with st.form("add_code_form"):
-                new_code = st.text_input("New Access Code")
-                submit_code = st.form_submit_button("Add Code")
-                if submit_code and new_code:
-                    # Check if code already exists
-                    existing_code = access_codes_collection.find_one({"code": new_code})
-                    if existing_code:
-                        st.warning(f"Access code '{new_code}' already exists!")
-                    else:
-                        access_codes_collection.insert_one({
-                            "code": new_code,
-                            "created_at": time.time(),
-                            "educator_id": "Admin"
-                        })
-                        st.rerun()
+            # Only show new access code form if Virtual Painter is not active
+            if not st.session_state.get('virtual_painter_active', False):
+                # Add new access code
+                with st.form("add_code_form"):
+                    new_code = st.text_input("New Access Code")
+                    submit_code = st.form_submit_button("Add Code")
+                    if submit_code and new_code:
+                        # Check if code already exists
+                        existing_code = access_codes_collection.find_one({"code": new_code})
+                        if existing_code:
+                            st.warning(f"Access code '{new_code}' already exists!")
+                        else:
+                            access_codes_collection.insert_one({
+                                "code": new_code,
+                                "created_at": time.time(),
+                                "educator_id": "Admin"
+                            })
+                            st.rerun()
 
     elif page == "Virtual Painter":
+        st.session_state.virtual_painter_active = True
         st.title("Virtual Painter")
-        st.info("Virtual Painter functionality has been moved to a separate module.")
+        VirtualPainterEduc.run_virtual_painter()
 
 
 if __name__ == "__main__":
