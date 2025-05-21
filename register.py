@@ -5,7 +5,6 @@ import time
 import subprocess
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
 # MongoDB connection with error handling
