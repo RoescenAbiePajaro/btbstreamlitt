@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import os
 import time
-from TensorFlowHandTracker import TensorFlowHandTracker
+import HandTrackingModule as htm
 from KeyboardInput import KeyboardInput
 import keyboard
 from collections import deque
@@ -244,13 +244,8 @@ def run_virtual_painter():
 
     cap = st.session_state.cap
 
-    # Initialize TensorFlow hand tracker
-    model_path = 'models/hand_gesture_model_final.h5'
-    if not os.path.exists(model_path):
-        st.warning("Hand gesture model not found. Please run train_hand_gesture_model.py first.")
-        st.stop()
-    
-    detector = TensorFlowHandTracker(model_path=model_path)
+    # Assigning Detector
+    detector = htm.handDetector(detectionCon=0.85)
 
     try:
         while run:
@@ -263,17 +258,16 @@ def run_virtual_painter():
 
             img = cv2.flip(img, 1)
 
-            # 2. Find Hand Landmarks and Gestures
-            img = detector.find_hands(img, draw=False)
-            lmList = detector.find_position(img, draw=False)
-            current_gesture = detector.get_gesture()
+            # 2. Find Hand Landmarks
+            img = detector.findHands(img, draw=False)
+            lmList = detector.findPosition(img, draw=False)
 
             # Draw black outline (thicker)
-            cv2.putText(img, f"Current Gesture: {current_gesture}", (50, 150),
+            cv2.putText(img, "Selection Mode - Two Fingers Up", (50, 150),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)  # Black with thickness 4
 
             # Draw main white text (thinner)
-            cv2.putText(img, f"Current Gesture: {current_gesture}", (50, 150),
+            cv2.putText(img, "Selection Mode - Two Fingers Up", (50, 150),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)  # White with thickness 2
 
             if len(lmList) != 0:
@@ -282,10 +276,10 @@ def run_virtual_painter():
                 x2, y2 = lmList[12][1:]
 
                 # 3. Check which fingers are up
-                fingers = detector.fingers_up()
+                fingers = detector.fingersUp()
 
-                # 4. Selection Mode - Two Fingers Up (pinch gesture)
-                if current_gesture == 'pinch':
+                # 4. Selection Mode - Two Fingers Up
+                if fingers[1] and fingers[2]:
                     xp, yp = 0, 0  # Reset points
                     swipe_start_x = None  # Reset swipe tracking when in selection mode
 
@@ -359,9 +353,27 @@ def run_virtual_painter():
                             header = overlayList[10]
                             show_guide = False
 
+                        # Brush/Eraser size controls
+                        elif 1155 < x1 < 1280 and y1 > 650:  # Bottom right area
+                            if x1 < 1200:  # Left side - decrease size
+                                if drawColor == (0, 0, 0):  # Eraser
+                                    eraserSize = max(10, eraserSize - 5)
+                                else:  # Brush
+                                    brushSize = max(1, brushSize - 1)
+                            else:  # Right side - increase size
+                                if drawColor == (0, 0, 0):  # Eraser
+                                    eraserSize = min(200, eraserSize + 5)
+                                else:  # Brush
+                                    brushSize = min(50, brushSize + 1)
+                            st.toast(
+                                f"{'Eraser' if drawColor == (0, 0, 0) else 'Brush'} size: {eraserSize if drawColor == (0, 0, 0) else brushSize}")
+
+                    # Show selection rectangle
+                    cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), drawColor, cv2.FILLED)
+
                 # ==================== HAND GESTURE LOGIC ====================
-                # GUIDE NAVIGATION MODE - Point gesture, guide visible, keyboard not active
-                elif current_gesture == 'point' and show_guide and not keyboard_input.active:
+                # GUIDE NAVIGATION MODE - One index finger, guide visible, keyboard not active
+                if fingers[1] and not fingers[2] and show_guide and not keyboard_input.active:
                     # Start or continue swipe gesture
                     if swipe_start_x is None:
                         swipe_start_x = x1
@@ -383,8 +395,8 @@ def run_virtual_painter():
                     # Visual feedback
                     cv2.circle(img, (x1, y1), 15, (0, 255, 0), cv2.FILLED)
 
-                # DRAWING MODE - Point gesture, guide hidden, keyboard not active
-                elif current_gesture == 'point' and not show_guide and not keyboard_input.active:
+                # DRAWING MODE - One index finger, guide hidden, keyboard not active
+                elif fingers[1] and not fingers[2] and not show_guide and not keyboard_input.active:
                     swipe_start_x = None  # cancel swipe tracking when drawing
 
                     # Eraser: Check for overlapping with existing text
@@ -420,8 +432,8 @@ def run_virtual_painter():
                     undoStack.append(save_state())
                     redoStack.clear()
 
-                # TEXT DRAGGING MODE - Pinch gesture, keyboard active
-                elif keyboard_input.active and current_gesture == 'pinch':
+                # TEXT DRAGGING MODE - Two fingers, keyboard active
+                elif keyboard_input.active and fingers[1] and fingers[2]:
                     center_x = (x1 + x2) // 2
                     center_y = (y1 + y2) // 2
 
@@ -438,7 +450,7 @@ def run_virtual_painter():
                     cv2.circle(img, (center_x, center_y), 15, (0, 255, 255), cv2.FILLED)
 
                 else:
-                    # Reset states when gesture not recognized or mode not active
+                    # Reset states when fingers not up or mode not active
                     xp, yp = 0, 0
                     swipe_start_x = None
                     swipe_active = False
@@ -453,7 +465,7 @@ def run_virtual_painter():
                     keyboard_input.end_drag()
 
             # Handle keyboard input
-            handle_keyboard_events()
+            handle_keyboard_events()  # Add this line
             current_time = time.time()
             dt = current_time - last_time
             last_time = current_time
