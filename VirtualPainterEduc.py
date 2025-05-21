@@ -217,63 +217,32 @@ def run_virtual_painter():
         with st.spinner('Initializing camera...'):
             try:
                 if 'cap' not in st.session_state:
-                    # Try different camera indices and resolutions
-                    camera_configs = [
-                        (0, 1280, 720),  # Default camera, HD
-                        (0, 640, 480),   # Default camera, SD
-                        (1, 1280, 720),  # Secondary camera, HD
-                        (1, 640, 480),   # Secondary camera, SD
-                        (2, 1280, 720),  # Tertiary camera, HD
-                        (2, 640, 480)    # Tertiary camera, SD
-                    ]
-
-                    for camera_index, width, height in camera_configs:
-                        try:
-                            st.session_state.cap = cv2.VideoCapture(camera_index)
-                            if st.session_state.cap.isOpened():
-                                # Set camera properties
-                                st.session_state.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-                                st.session_state.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-                                # Test if we can actually read a frame
-                                ret, frame = st.session_state.cap.read()
-                                if ret and frame is not None:
-                                    st.session_state.camera_initialized = True
-                                    st.success(f"Camera initialized successfully at {width}x{height}")
-                                    break
-                                else:
-                                    st.session_state.cap.release()
-                        except Exception as e:
-                            if st.session_state.cap is not None:
+                    # Try different camera indices
+                    for camera_index in [0, 1, 2]:
+                        st.session_state.cap = cv2.VideoCapture(camera_index)
+                        if st.session_state.cap.isOpened():
+                            # Test if we can actually read a frame
+                            ret, _ = st.session_state.cap.read()
+                            if ret:
+                                break
+                            else:
                                 st.session_state.cap.release()
-                            continue
 
-                    if not st.session_state.camera_initialized:
-                        st.error('Failed to initialize camera. Please check your camera connection and make sure no other application is using it.')
+                    if not st.session_state.cap.isOpened():
+                        st.error(
+                            'Failed to initialize camera. Please check your camera connection and make sure no other application is using it.')
                         st.stop()
 
+                    # Set camera properties
+                    st.session_state.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                    st.session_state.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                    st.session_state.camera_initialized = True
             except Exception as e:
                 st.error(f'Error initializing camera: {str(e)}')
                 st.stop()
             time.sleep(1)  # Brief pause to show loading state
 
     cap = st.session_state.cap
-
-    # Add camera reconnection logic
-    def reconnect_camera():
-        nonlocal cap
-        if 'cap' in st.session_state:
-            try:
-                st.session_state.cap.release()
-            except:
-                pass
-            del st.session_state.cap
-        st.session_state.camera_initialized = False
-        st.rerun()
-
-    # Add a reconnect button
-    if st.button("Reconnect Camera"):
-        reconnect_camera()
 
     # Assigning Detector
     detector = htm.handDetector(detectionCon=0.85)
