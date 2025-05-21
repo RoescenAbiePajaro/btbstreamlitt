@@ -19,9 +19,10 @@ load_dotenv()
 try:
     # Configure MongoDB client with SSL settings
     client = MongoClient(
-        st.secrets("MONGODB_URI"),
+        st.secrets["MONGODB_URI"],
         tls=True,
-        tlsAllowInvalidCertificates=True,
+        tlsAllowInvalidCertificates=False,
+        tlsInsecure=False,
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000

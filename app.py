@@ -24,11 +24,12 @@ try:
     if not MONGODB_URI:
         raise ValueError("MONGODB_URI not set in secrets.toml")
 
-    # Configure MongoDB client with SSL settings
+    # Configure MongoDB client with updated SSL settings
     client = MongoClient(
         MONGODB_URI,
         tls=True,
-        tlsAllowInvalidCertificates=True,
+        tlsAllowInvalidCertificates=False,  # Changed to False for better security
+        tlsInsecure=False,  # Added to ensure secure connection
         serverSelectionTimeoutMS=5000,
         connectTimeoutMS=10000,
         socketTimeoutMS=10000
@@ -167,8 +168,7 @@ def show_entry_page():
                 st.session_state.submitted = True
                 verify_code(code, "educator", "")
 
-# --- MAIN --- h
-
+# --- MAIN ---
 def main():
     show_entry_page()
 
