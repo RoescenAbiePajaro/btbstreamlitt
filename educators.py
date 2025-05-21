@@ -45,7 +45,15 @@ def get_mongodb_connection():
         if not MONGODB_URI:
             raise ValueError("MONGODB_URI environment variable is not set")
 
-        client = MongoClient(MONGODB_URI)
+        # Configure MongoDB client with SSL settings
+        client = MongoClient(
+            MONGODB_URI,
+            tls=True,
+            tlsAllowInvalidCertificates=True,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=10000,
+            socketTimeoutMS=10000
+        )
         # Test the connection
         client.admin.command('ping')
         db = client["beyond_the_brush"]
@@ -53,7 +61,8 @@ def get_mongodb_connection():
         access_codes_collection = db["access_codes"]
         yield students_collection, access_codes_collection
     except Exception as e:
-        st.error(f"Failed to connect to MongoDB: {str(e)}")
+        st.error(f"MongoDB connection failed: {str(e)}")
+        st.error("Please check your internet connection and MongoDB Atlas settings.")
         st.stop()
     finally:
         if client:

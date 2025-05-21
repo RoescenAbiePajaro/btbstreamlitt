@@ -24,13 +24,23 @@ try:
     if not MONGODB_URI:
         raise ValueError("MONGODB_URI not set in .env")
 
-    client = MongoClient(MONGODB_URI)
+    # Configure MongoDB client with SSL settings
+    client = MongoClient(
+        MONGODB_URI,
+        tls=True,
+        tlsAllowInvalidCertificates=True,
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=10000,
+        socketTimeoutMS=10000
+    )
+    # Test the connection
     client.admin.command('ping')
     db = client["beyond_the_brush"]
     students_collection = db["students"]
     access_codes_collection = db["access_codes"]
 except Exception as e:
     st.error(f"MongoDB connection failed: {str(e)}")
+    st.error("Please check your internet connection and MongoDB Atlas settings.")
     st.stop()
 
 # --- SESSION STATE ---
