@@ -1,3 +1,4 @@
+# register.py
 import streamlit as st
 from pymongo import MongoClient
 import time
@@ -107,10 +108,11 @@ def register_student():
                         st.error("Invalid access code. Please ask your educator for a valid code.")
 
     # Add Back button
-    if st.button("Back to Login", key="back_btn"):
-        subprocess.Popen(["streamlit", "run", "Login"])
-        st.stop()
-
+    st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
+    col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
+    with col2:  # Place button in middle column
+        if st.button("Back to Login", use_container_width=True):
+            st.markdown("<meta http-equiv='refresh' content='0; url=http://localhost:8501/' />", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     register_student()

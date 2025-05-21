@@ -1,4 +1,4 @@
-# VirtualPainter
+# VirtualPainterEduc.py
 import streamlit as st
 import cv2
 import numpy as np
@@ -8,13 +8,12 @@ import HandTrackingModule as htm
 from KeyboardInput import KeyboardInput
 import keyboard
 from collections import deque
-import subprocess
 
 
 
 # Set page config first
 st.set_page_config(
-    page_title="Welcome to Beyond The Brush",
+    page_title="Beyond The Brush (Educator)",
     page_icon="static/icons.png",  # e.g., "assets/icon.png"
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -35,6 +34,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+
 # # Add sidebar settings for brush and eraser sizes
 # with st.sidebar:
 #     st.header("Tool Settings")
@@ -42,23 +43,31 @@ st.markdown(
 #     eraserSize = st.slider("Eraser Size", 10, 200, 100, key="eraser_size")
 #     st.info("Adjust the sizes above. Changes will take effect immediately.")
 
+if st.sidebar.button("Go Back"):
+    if 'camera' in st.session_state:
+        st.session_state.camera.release()  # Turn off camera
+        del st.session_state.camera        # Clean up the session
+
+    # Redirect using meta refresh
+    st.markdown(
+        """
+        <meta http-equiv="refresh" content="0; url='http://localhost:8501/educators'" />
+        """,
+        unsafe_allow_html=True
+    )
+
 if st.sidebar.button("Logout"):
     if 'camera' in st.session_state:
         st.session_state.camera.release()  # Turn off camera
-        del st.session_state.camera  # Clean up the session
+        del st.session_state.camera        # Clean up the session
 
-    # Clear session state
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-
-    # Redirect to main page
+    # Redirect using meta refresh
     st.markdown(
         """
         <meta http-equiv="refresh" content="0; url='http://localhost:8501/'" />
         """,
         unsafe_allow_html=True
     )
-    st.stop()
 
 # Variables
 brushSize = 10
@@ -111,7 +120,6 @@ redoStack = []
 # Create keyboard input handler
 keyboard_input = KeyboardInput()
 last_time = time.time()
-
 
 def handle_keyboard_events():
     if keyboard_input.active:
@@ -247,7 +255,7 @@ def interpolate_points(x1, y1, x2, y2, num_points=10):
 st.title("Beyond The Brush - Virtual Painter")
 
 # Camera input
-run = st.checkbox('Click this to Stop the webcam ', value=True)
+run = st.checkbox('Run', value=True)
 FRAME_WINDOW = st.image([])
 
 # Add camera loading state

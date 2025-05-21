@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import time
 from PIL import Image
@@ -132,24 +133,28 @@ def show_entry_page():
         role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
         st.session_state.role = role
 
-        if role == "Student":
+        if role == "Student" and not st.session_state.access_granted:
             st.markdown("#### Login")
             name = st.text_input("Enter your name", placeholder="Your name", key="name_input")
             code = st.text_input("Enter access code", placeholder="Access code", type="password", key="access_code")
 
-            if st.button("LOGIN") or st.session_state.submitted:
+            if st.button("Login") or st.session_state.submitted:
                 st.session_state.submitted = True
+                if st.session_state.access_granted:
+                    st.success("Access granted!")
                 verify_code(code, "student", name)
 
             if st.button("Register New Student"):
                 subprocess.Popen(["streamlit", "run", "register.py"])
                 st.stop()
-        else:
+
+
+        elif role == "Educator" and not st.session_state.access_granted:
             st.markdown("#### Educator Access")
             st.info("Enter your admin access code.")
             code = st.text_input("Access code", type="password", key="admin_code")
 
-            if st.button("LOGIN") or st.session_state.submitted:
+            if st.button("Login") or st.session_state.submitted:
                 st.session_state.submitted = True
                 verify_code(code, "educator", "")
 
